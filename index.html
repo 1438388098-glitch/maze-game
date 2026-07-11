@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="description" content="极简迷宫 — 纯键盘操控的2D平面迷宫游戏">
+<title>迷宫 Maze</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="navbar scrolled" id="navbar">
+  <div class="nav-inner">
+    <span class="nav-logo" id="nav-logo">迷宫</span>
+    <span class="nav-center" id="nav-center"></span>
+    <div class="nav-right">
+      <button class="nav-btn" id="nav-theme">☀</button>
+      <button class="nav-btn" id="nav-sound">🔊</button>
+      <button class="nav-btn" id="nav-settings">⚙</button>
+    </div>
+  </div>
+</nav>
+
+<section class="hero" id="hero-section">
+  <div class="hero-content">
+    <h1><span class="accent">迷宫</span> Maze</h1>
+    <p class="subtitle">纯键盘操控的极简 2D 平面迷宫</p>
+    <div class="diff-cards" id="diff-cards"></div>
+    <div class="mode-row" id="mode-row"></div>
+    <div class="mode-hint" id="mode-hint" style="font-size:12px;color:var(--text-tertiary);margin-bottom:.5rem;min-height:1.2em;font-family:var(--font-sans)"></div>
+    <div class="seed-row">
+      <label style="color:var(--text-tertiary)">种子</label>
+      <input type="text" class="seed-input" id="seed-input" placeholder="留空随机" maxlength="10">
+      <button class="btn btn-sm" id="btn-daily">每日挑战</button>
+    </div>
+    <div class="challenge-row">
+      <label><input type="checkbox" id="ch-time-cb">限时<input type="number" id="ch-time-val" value="300" min="30" max="3600" step="30" disabled>秒</label>
+      <label><input type="checkbox" id="ch-steps-cb">限步<input type="number" id="ch-steps-val" value="500" min="10" max="99999" step="50" disabled>步</label>
+    </div>
+      <div class="engine-row" id="engine-row">
+        <label style="color:var(--text-tertiary);font-size:.72rem">引擎</label>
+        <button class="engine-btn active" data-engine="standard">标准 v1</button>
+        <button class="engine-btn" data-engine="experimental">实验 v2</button>
+      </div>
+      <button class="btn btn-primary" id="btn-start">开始游戏</button>
+      <div class="campaign-section" id="campaign-section">
+        <button class="btn btn-sm" id="btn-campaign">🏆 闯关模式</button>
+        <div class="campaign-config hidden" id="campaign-config">
+          <div class="cconfig-row">
+            <label>入门 <input type="number" class="cc-input" data-diff="beginner" value="1" min="1" max="3"></label>
+            <label>普通 <input type="number" class="cc-input" data-diff="normal" value="1" min="1" max="3"></label>
+            <label>困难 <input type="number" class="cc-input" data-diff="hard" value="1" min="1" max="3"></label>
+            <label>地狱 <input type="number" class="cc-input" data-diff="hell" value="1" min="1" max="3"></label>
+          </div>
+          <button class="btn btn-sm btn-primary" id="btn-campaign-start">开始闯关</button>
+        </div>
+      </div>
+    <div class="hero-footer" id="hero-footer">
+      <div class="hf-row" id="hf-records"></div>
+      <div class="hf-toggle" id="hf-toggle">📊 历史记录</div>
+      <div class="hf-leaderboard" id="hf-leaderboard"></div>
+    </div>
+  </div>
+</section>
+
+<section class="game-section" id="game-section">
+  <div class="game-hud" id="game-hud">
+    <span class="hud-item">⏱ <span id="hud-timer">00:00:00</span></span>
+    <span class="hud-item">👣 <span id="hud-steps">0</span></span>
+    <span class="hud-item" id="hud-dist" style="color:var(--text-tertiary)">📍 ?</span>
+    <span class="hud-item" id="hud-gems" style="display:none;color:var(--accent)"></span>
+    <span class="hud-item" id="hud-countdown" style="display:none;color:var(--color-danger)"></span>
+    <span class="hud-item" id="hud-seed" style="color:var(--text-tertiary);font-size:.72rem;cursor:pointer" title="点击复制种子"></span>
+    <span class="hud-spacer"></span>
+    <span class="hud-item" style="font-family:var(--font-sans);font-size:.72rem" id="hud-diff"></span>
+  </div>
+  <div class="game-canvas-wrap" id="canvas-wrap">
+    <canvas id="maze-canvas"></canvas>
+    <div class="metrics-panel" id="metrics-panel">
+      <div class="mp-header">迷宫指标</div>
+      <div id="mp-content"></div>
+    </div>
+    <div class="minimap" id="minimap"><canvas id="minimap-canvas"></canvas></div>
+  </div>
+  <div class="game-controls" id="game-controls">
+    <div class="ctrl-row">
+      <button class="ctrl-btn active" id="btn-breadcrumb">轨迹</button>
+      <button class="ctrl-btn" id="btn-fog">迷雾</button>
+      <button class="ctrl-btn" id="btn-ghost">👻 幽灵</button>
+      <button class="ctrl-btn" id="btn-backtrack">回溯</button>
+      <button class="ctrl-btn" id="btn-hint">提示</button>
+    </div>
+    <div class="ctrl-row">
+      <button class="ctrl-btn" id="btn-new-game">新局</button>
+      <button class="ctrl-btn" id="btn-reset-maze">重置</button>
+      <button class="ctrl-btn" id="btn-pause-game">⏸ 暂停</button>
+      <button class="ctrl-btn" id="btn-settings-open">⚙ 设置</button>
+    </div>
+  </div>
+  <div class="kb-hint" id="kb-hint">↑↓←→/WASD 移动 | Esc 暂停 | F 迷雾 | G 幽灵 | H 提示 | B 回溯 | R 重置 | N 新局 | T 主题</div>
+</section>
+
+<footer class="footer" id="footer"><div class="container">© 2026 迷宫 Maze · 纯本地运行 · 零追踪 · 零广告</div></footer>
+
+<div class="modal hidden" id="pause-modal"><div class="modal-card">
+  <h2>已暂停</h2><p class="subtitle">计时已停止</p>
+  <div class="btn-group"><button class="btn btn-primary" id="btn-resume">继续</button><button class="btn" id="btn-quit">返回菜单</button></div>
+</div></div>
+<div class="modal hidden" id="confirm-modal"><div class="modal-card">
+  <h2>确定退出?</h2><p class="subtitle" id="confirm-msg">当前进度将丢失</p>
+  <div class="btn-group"><button class="btn btn-primary" id="btn-confirm-yes">确定</button><button class="btn" id="btn-confirm-no">取消</button></div>
+</div></div>
+<div class="modal hidden" id="win-modal"><div class="modal-card">
+  <h1 style="color:var(--color-success)">✔ 通关!</h1>
+  <div class="stats-row"><div><div class="sv" id="win-time"></div><div class="sl">用时</div></div><div><div class="sv" id="win-steps"></div><div class="sl">步数</div></div></div>
+  <div class="stats-detail" id="stats-detail"></div>
+  <div class="best-compare" id="best-compare"></div>
+  <div id="win-score" style="font-size:.9rem;font-weight:700;color:var(--accent);margin:.3rem 0 .3rem;font-family:var(--font-mono)"></div>
+  <div id="win-achievements" style="font-size:.65rem;color:var(--color-success);margin:.2rem 0"></div>
+  <div class="stats-detail" id="maze-stats" style="font-size:.65rem;color:var(--text-tertiary);margin-top:-.2rem"></div>
+  <div class="btn-group">
+    <button class="btn btn-sm" id="btn-win-replay">▶ 回放</button>
+    <button class="btn btn-primary" id="btn-win-new">再来一局</button>
+    <button class="btn" id="btn-win-menu">选择难度</button>
+  </div>
+</div></div>
+<div class="modal hidden" id="fail-modal"><div class="modal-card">
+  <h1 style="color:var(--color-danger)">✘ 挑战失败</h1><p class="subtitle" id="fail-reason"></p>
+  <div class="stats-row"><div><div class="sv" id="fail-time"></div><div class="sl">用时</div></div><div><div class="sv" id="fail-steps"></div><div class="sl">步数</div></div></div>
+  <div class="btn-group"><button class="btn btn-primary" id="btn-fail-retry">重试</button><button class="btn" id="btn-fail-menu">返回菜单</button></div>
+</div></div>
+<div class="modal hidden" id="settings-modal"><div class="modal-card" style="text-align:left">
+  <h2 style="text-align:center;margin-bottom:.8rem">设置</h2>
+  <div class="settings-section"><h3>外观</h3>
+    <div class="skin-swatches" id="skin-swatches"></div>
+    <div class="settings-row" style="margin-top:.4rem"><span>暗色模式</span><button class="btn btn-sm" id="btn-theme-toggle">切换</button></div>
+  </div>
+  <div class="settings-section"><h3>历史最佳</h3>
+    <div id="best-records-display"></div>
+    <div style="margin-top:.4rem"><button class="btn btn-sm" id="btn-reset-records" style="color:var(--color-danger);border-color:var(--color-danger)">清空所有记录</button></div>
+  </div>
+  <div class="settings-section"><h3>移动速度</h3>
+    <div class="settings-row"><span>速度</span><div id="speed-btns"><button class="btn btn-sm" data-speed="slow">慢</button><button class="btn btn-sm" data-speed="medium">中</button><button class="btn btn-sm" data-speed="fast">快</button></div></div>
+  </div>
+  <div class="settings-section"><h3>字体大小</h3>
+    <div class="settings-row"><span>字体</span><div id="font-size-btns"><button class="btn btn-sm" data-size="small">小</button><button class="btn btn-sm" data-size="medium">中</button><button class="btn btn-sm" data-size="large">大</button></div></div>
+  </div>
+  <div class="settings-section"><h3>音效</h3>
+    <div class="settings-row"><span>启用音效</span><button class="btn btn-sm" id="btn-sound-toggle">开</button></div>
+  </div>
+  <div class="settings-section"><h3>成就</h3>
+    <div id="achievements-display" style="font-size:.7rem;color:var(--text-secondary)"></div>
+  </div>
+  <div class="settings-section"><h3>排行榜</h3>
+    <div class="settings-row"><span>清空排行榜数据</span><button class="btn btn-sm" id="btn-clear-leaderboard" style="color:var(--color-danger);border-color:var(--color-danger)">清空</button></div>
+  </div>
+  <div class="btn-group" style="margin-top:.6rem"><button class="btn" id="btn-settings-close">关闭</button></div>
+</div></div>
+<div class="history-modal hidden" id="history-modal">
+  <div class="history-card">
+    <div class="history-header">
+      <h2>📊 历史记录</h2>
+      <button class="history-close" id="history-close">✕</button>
+    </div>
+    <div class="history-filters">
+      <button class="history-filter active" data-type="all" data-value="">全部</button>
+      <button class="history-filter" data-type="mode" data-value="standard">🎮 标准</button>
+      <button class="history-filter" data-type="mode" data-value="torch">🔦 火炬</button>
+      <button class="history-filter" data-type="mode" data-value="treasure">💎 寻宝</button>
+      <button class="history-filter" data-type="mode" data-value="torchpro">🦇 黑灯</button>
+      <button class="history-filter" data-type="diff" data-value="beginner">极简</button>
+      <button class="history-filter" data-type="diff" data-value="normal">普通</button>
+      <button class="history-filter" data-type="diff" data-value="hard">困难</button>
+      <button class="history-filter" data-type="diff" data-value="hell">地狱</button>
+    </div>
+    <div class="history-stats" id="history-stats"></div>
+    <div class="history-charts" id="history-charts">
+      <div class="history-chart">
+        <h3>📈 得分趋势</h3>
+        <canvas id="chart-score" width="1200" height="200"></canvas>
+      </div>
+      <div class="history-chart">
+        <h3>⏱ 用时趋势</h3>
+        <canvas id="chart-time" width="1200" height="200"></canvas>
+      </div>
+      <div class="history-chart">
+        <h3>🎯 效率趋势</h3>
+        <canvas id="chart-eff" width="1200" height="200"></canvas>
+      </div>
+    </div>
+    <div class="history-list" id="history-list"></div>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
