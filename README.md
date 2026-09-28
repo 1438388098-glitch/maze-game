@@ -1,5 +1,10 @@
 # 迷宫 Maze
 
+> **English**: A minimalist, keyboard-only 2D maze game with quantitatively evaluated maze generation and pathfinding — zero dependencies, zero build.
+> Mazes come from a parameterized Growing Tree algorithm (α continuously blends DFS and Prim behaviors) refined by MCMC (Metropolis-Hastings with simulated annealing), and are scored on 7 quality metrics (tortuosity, dead-end rate, branching factor, entropy, fractal dimension, etc.).
+> Four grid difficulties (15×15 up to 45×45), four game modes (Standard / Torch / Treasure / Blackout), and 14 achievements.
+> **Run**: double-click `start.bat`, or `python -m http.server 8080` (Node one-liner also provided), then open http://localhost:8080.
+
 纯键盘操控的极简 2D 平面迷宫游戏。**零依赖、零构建、丢服务器即跑。**
 
 ---
